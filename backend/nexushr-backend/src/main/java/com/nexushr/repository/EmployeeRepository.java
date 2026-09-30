@@ -1,0 +1,1 @@
+package com.nexushr.repository; import com.nexushr.entity.Employee; import java.util.*; import org.springframework.data.jpa.repository.JpaRepository; public interface EmployeeRepository extends JpaRepository<Employee,UUID>{Optional<Employee> findByUserId(UUID id); Optional<Employee> findByEmployeeCode(String code); long countByOnboardingComplete(boolean v);}

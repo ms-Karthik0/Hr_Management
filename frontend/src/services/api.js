@@ -1,0 +1,14 @@
+import axios from 'axios';
+export const API_BASE=import.meta.env.VITE_API_BASE_URL||'http://localhost:8081/api';
+const api=axios.create({baseURL:API_BASE,headers:{'Content-Type':'application/json'}});
+api.interceptors.request.use(c=>{const t=localStorage.getItem('nexushr_token');if(t)c.headers.Authorization=`Bearer ${t}`;return c});
+api.interceptors.response.use(r=>r,e=>{if(e.response?.status===401){localStorage.removeItem('nexushr_token');localStorage.removeItem('nexushr_user');window.location.href='/login'}return Promise.reject(e)});
+export const auth={login:d=>api.post('/auth/login',d),register:d=>api.post('/auth/register',d)};
+export const employees={all:()=>api.get('/employees'),one:id=>api.get(`/employees/${id}`),me:()=>api.get('/employees/me'),create:d=>api.post('/employees',d),update:(id,d)=>api.put(`/employees/${id}`,d)};
+export const attendance={me:()=>api.get('/attendance/me'),create:d=>api.post('/attendance/me',d)};
+export const leaves={me:()=>api.get('/leaves/me'),all:()=>api.get('/leaves'),create:d=>api.post('/leaves',d),approve:(id,s)=>api.patch(`/leaves/${id}/status`,{status:s})};
+export const payroll={me:()=>api.get('/payroll/me'),all:()=>api.get('/payroll'),create:d=>api.post('/payroll',d)};
+export const performance={me:()=>api.get('/performance/me'),all:()=>api.get('/performance'),create:d=>api.post('/performance',d)};
+export const dashboard={summary:()=>api.get('/dashboard/summary'),insights:()=>api.get('/dashboard/ai-insights')};
+export const holidays={all:()=>api.get('/holidays'),create:d=>api.post('/holidays',d)};
+export default api;

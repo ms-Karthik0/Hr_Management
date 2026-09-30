@@ -1,0 +1,5 @@
+export function Card({children,className=''}){return <section className={`card ${className}`}>{children}</section>}
+export function Stat({label,value,meta,icon:Icon}){return <Card className="stat"><div className="stat-icon">{Icon&&<Icon size={19}/>}</div><div><span>{label}</span><strong>{value}</strong>{meta&&<small>{meta}</small>}</div></Card>}
+export function Table({columns,rows,empty='No records found.'}){return <div className="table-wrap"><table><thead><tr>{columns.map(c=><th key={c.key}>{c.label}</th>)}</tr></thead><tbody>{rows.length?rows.map((r,i)=><tr key={r.id||i}>{columns.map(c=><td key={c.key}>{c.render?c.render(r):r[c.key]??'—'}</td>)}</tr>):<tr><td colSpan={columns.length} className="empty">{empty}</td></tr>}</tbody></table></div>}
+export function Badge({children,tone=''}){return <span className={`badge ${tone}`}>{children}</span>}
+export function PageIntro({eyebrow,title,children,action}){return <div className="page-intro"><div><span className="eyebrow">{eyebrow}</span><h2>{title}</h2>{children&&<p>{children}</p>}</div>{action}</div>}

@@ -1,0 +1,1 @@
+package com.nexushr.repository; import com.nexushr.entity.Holiday; import java.time.*; import java.util.*; import org.springframework.data.jpa.repository.JpaRepository; public interface HolidayRepository extends JpaRepository<Holiday,UUID>{List<Holiday> findByDateBetweenOrderByDate(LocalDate a,LocalDate b);}
