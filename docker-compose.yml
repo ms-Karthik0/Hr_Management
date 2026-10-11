@@ -1,62 +1,144 @@
-version: '3.8'
+name: nexushr
 
 services:
-  postgres:
+  auth-db:
     image: postgres:17-alpine
-    container_name: nexushr-postgres
     environment:
-      POSTGRES_DB: nexushr
+      POSTGRES_DB: nexushr_auth
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgrespassword
-    ports:
-      - "5432:5432"
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-nexushr-local-only}
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - auth-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d nexushr_auth"]
       interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
 
-  redis:
-    image: redis:7-alpine
-    container_name: nexushr-redis
-    ports:
-      - "6379:6379"
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-
-  backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    container_name: nexushr-backend
+  employee-db:
+    image: postgres:17-alpine
     environment:
-      SPRING_PROFILES_ACTIVE: prod
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/nexushr
+      POSTGRES_DB: nexushr_employee
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-nexushr-local-only}
+    volumes:
+      - employee-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d nexushr_employee"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  workforce-db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: nexushr_workforce
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-nexushr-local-only}
+    volumes:
+      - workforce-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d nexushr_workforce"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  payroll-db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: nexushr_payroll
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-nexushr-local-only}
+    volumes:
+      - payroll-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d nexushr_payroll"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  auth-service:
+    build: ./services/auth-service
+    environment:
+      SERVER_PORT: 8080
+      SPRING_DATASOURCE_URL: jdbc:postgresql://auth-db:5432/nexushr_auth
+      SPRING_DATASOURCE_DRIVER: org.postgresql.Driver
       SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: postgrespassword
-      APP_JWT_SECRET: ${APP_JWT_SECRET:?Set APP_JWT_SECRET in your environment or .env file}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-nexushr-local-only}
+      APP_JWT_SECRET: ${APP_JWT_SECRET:?Generate a Base64-encoded 256-bit APP_JWT_SECRET}
     ports:
-      - "8080:8080"
+      - "8081:8080"
     depends_on:
-      postgres:
+      auth-db:
         condition: service_healthy
-      redis:
+    restart: unless-stopped
+
+  employee-service:
+    build: ./services/employee-service
+    environment:
+      SERVER_PORT: 8080
+      SPRING_DATASOURCE_URL: jdbc:postgresql://employee-db:5432/nexushr_employee
+      SPRING_DATASOURCE_DRIVER: org.postgresql.Driver
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-nexushr-local-only}
+      APP_JWT_SECRET: ${APP_JWT_SECRET:?Generate a Base64-encoded 256-bit APP_JWT_SECRET}
+      AUTH_SERVICE_URL: http://auth-service:8080/api
+    ports:
+      - "8082:8080"
+    depends_on:
+      employee-db:
         condition: service_healthy
+    restart: unless-stopped
+
+  workforce-service:
+    build: ./services/workforce-service
+    environment:
+      SERVER_PORT: 8080
+      SPRING_DATASOURCE_URL: jdbc:postgresql://workforce-db:5432/nexushr_workforce
+      SPRING_DATASOURCE_DRIVER: org.postgresql.Driver
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-nexushr-local-only}
+      APP_JWT_SECRET: ${APP_JWT_SECRET:?Generate a Base64-encoded 256-bit APP_JWT_SECRET}
+      EMPLOYEE_SERVICE_URL: http://employee-service:8080/api
+      PAYROLL_SERVICE_URL: http://payroll-service:8080/api
+    ports:
+      - "8083:8080"
+    depends_on:
+      workforce-db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  payroll-service:
+    build: ./services/payroll-service
+    environment:
+      SERVER_PORT: 8080
+      SPRING_DATASOURCE_URL: jdbc:postgresql://payroll-db:5432/nexushr_payroll
+      SPRING_DATASOURCE_DRIVER: org.postgresql.Driver
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-nexushr-local-only}
+      APP_JWT_SECRET: ${APP_JWT_SECRET:?Generate a Base64-encoded 256-bit APP_JWT_SECRET}
+      EMPLOYEE_SERVICE_URL: http://employee-service:8080/api
+      WORKFORCE_SERVICE_URL: http://workforce-service:8080/api
+    ports:
+      - "8084:8080"
+    depends_on:
+      payroll-db:
+        condition: service_healthy
+    restart: unless-stopped
 
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    container_name: nexushr-frontend
+    build: ./frontend
     ports:
       - "3000:80"
     depends_on:
-      - backend
+      - auth-service
+      - employee-service
+      - workforce-service
+      - payroll-service
+    restart: unless-stopped
 
 volumes:
-  pgdata:
+  auth-data:
+  employee-data:
+  workforce-data:
+  payroll-data:

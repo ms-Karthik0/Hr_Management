@@ -20,6 +20,8 @@ public class User {
     private String firstName;
     private String lastName;
 
+    private Long employeeId;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role;
@@ -54,6 +56,9 @@ public class User {
 
     public String getLastName() { return lastName; }
     public void setLastName(String lastName) { this.lastName = lastName; }
+
+    public Long getEmployeeId() { return employeeId; }
+    public void setEmployeeId(Long employeeId) { this.employeeId = employeeId; }
 
     public Role getRole() { return role; }
     public void setRole(Role role) { this.role = role; }

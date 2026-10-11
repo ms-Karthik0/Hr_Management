@@ -2,13 +2,13 @@ name: NexusHR CI/CD Pipeline
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main, develop, nexusHr_full ]
   pull_request:
     branches: [ main ]
 
 jobs:
   backend-test-and-build:
-    name: Backend CI (Java 21 / Spring Boot 3.3)
+    name: Legacy backend CI (Java 21 / Spring Boot 3.3)
     runs-on: ubuntu-latest
 
     steps:
@@ -31,6 +31,29 @@ jobs:
         run: |
           cd backend
           mvn package -DskipTests
+
+  microservices-test:
+    name: Test ${{ matrix.service }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service: [auth-service, employee-service, workforce-service, payroll-service]
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up Java JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+          cache-dependency-path: 'services/${{ matrix.service }}/pom.xml'
+
+      - name: Test and Package Microservice
+        run: mvn -B -f services/${{ matrix.service }}/pom.xml clean verify
 
   frontend-test-and-build:
     name: Frontend CI (React 19 / TypeScript)
@@ -59,7 +82,7 @@ jobs:
 
   docker-build:
     name: Containerization & Registry Publish
-    needs: [backend-test-and-build, frontend-test-and-build]
+    needs: [backend-test-and-build, microservices-test, frontend-test-and-build]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
 
@@ -68,11 +91,19 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
-        uses: actions/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v3
 
-      - name: Build Backend Docker Image
-        run: |
-          docker build -t nexushr/backend:latest ./backend
+      - name: Build Auth Service Docker Image
+        run: docker build -t nexushr/auth-service:latest ./services/auth-service
+
+      - name: Build Employee Service Docker Image
+        run: docker build -t nexushr/employee-service:latest ./services/employee-service
+
+      - name: Build Workforce Service Docker Image
+        run: docker build -t nexushr/workforce-service:latest ./services/workforce-service
+
+      - name: Build Payroll Service Docker Image
+        run: docker build -t nexushr/payroll-service:latest ./services/payroll-service
 
       - name: Build Frontend Docker Image
         run: |

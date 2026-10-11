@@ -30,23 +30,34 @@ public class JwtTokenProvider {
 
     public String generateToken(Authentication authentication) {
         UserDetails userPrincipal = (UserDetails) authentication.getPrincipal();
-        return generateTokenFromUsername(userPrincipal.getUsername(), jwtExpirationMs);
+        String authority = authentication.getAuthorities().stream()
+                .findFirst()
+                .map(Object::toString)
+                .orElse("ROLE_EMPLOYEE");
+        return generateTokenFromUsername(userPrincipal.getUsername(), jwtExpirationMs, authority, null);
     }
 
     public String generateRefreshToken(String username) {
-        return generateTokenFromUsername(username, refreshExpirationMs);
+        return generateTokenFromUsername(username, refreshExpirationMs, "ROLE_EMPLOYEE", null);
     }
 
     public String generateTokenFromUsername(String username, long expiration) {
+        return generateTokenFromUsername(username, expiration, "ROLE_EMPLOYEE", null);
+    }
+
+    public String generateTokenFromUsername(String username, long expiration, String authority, Long employeeId) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + expiration);
 
-        return Jwts.builder()
+        var builder = Jwts.builder()
                 .subject(username)
+                .claim("authority", authority)
                 .issuedAt(now)
-                .expiration(expiryDate)
-                .signWith(getSigningKey(), Jwts.SIG.HS256)
-                .compact();
+                .expiration(expiryDate);
+        if (employeeId != null) {
+            builder.claim("employeeId", employeeId);
+        }
+        return builder.signWith(getSigningKey(), Jwts.SIG.HS256).compact();
     }
 
     public String getUsernameFromJwt(String token) {
@@ -65,5 +76,14 @@ public class JwtTokenProvider {
         } catch (JwtException | IllegalArgumentException ex) {
             return false;
         }
+    }
+
+    public String getAuthorityFromJwt(String token) {
+        return Jwts.parser()
+                .verifyWith(getSigningKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload()
+                .get("authority", String.class);
     }
 }

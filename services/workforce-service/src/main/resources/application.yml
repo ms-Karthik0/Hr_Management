@@ -1,0 +1,26 @@
+server:
+  port: ${SERVER_PORT:8083}
+  servlet:
+    context-path: /api
+spring:
+  application:
+    name: workforce-service
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:h2:mem:nexushr_workforce;DB_CLOSE_DELAY=-1;MODE=PostgreSQL}
+    driver-class-name: ${SPRING_DATASOURCE_DRIVER:org.h2.Driver}
+    username: ${SPRING_DATASOURCE_USERNAME:sa}
+    password: ${SPRING_DATASOURCE_PASSWORD:password}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+app:
+  jwt:
+    secret: ${APP_JWT_SECRET:}
+    expiration-ms: 86400000
+    refresh-expiration-ms: 604800000
+services:
+  employee:
+    url: ${EMPLOYEE_SERVICE_URL:http://localhost:8082/api}
+  payroll:
+    url: ${PAYROLL_SERVICE_URL:http://localhost:8084/api}

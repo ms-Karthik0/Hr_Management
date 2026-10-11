@@ -28,7 +28,7 @@
                                            │  HTTPS / REST / WebSocket (STOMP)
                                            ▼
 +---------------------------------------------------------------------------------------+
-|                                  API GATEWAY & SECURITY                               |
+|                       NGINX / VITE ROUTER (API PATH ROUTING)                         |
 |        Spring Security 6 • JJWT 0.12.6 • CORS Whitelist • BCrypt / Argon2             |
 |        Stateless Bearer Interceptor • RBAC Method Guards (@PreAuthorize)              |
 +---------------------------------------------------------------------------------------+
@@ -36,22 +36,24 @@
        ┌───────────────────┬───────────────┴───────────────┬───────────────────┐
        ▼                   ▼                               ▼                   ▼
 +--------------+    +--------------+                +--------------+    +--------------+
-|   EMPLOYEE   |    |  ATTENDANCE  |                |   PAYROLL    |    |  SPRING AI   |
-|   SERVICE    |    |   SERVICE    |                |   SERVICE    |    | WORKFORCE ML |
-|  Lifecycle   |    |  Biometric   |                | Tax / Net    |    | Flight Risk  |
-|  Onboarding  |    |  RFID Clock  |                | Batch Run    |    |  Skill Gap   |
+|     AUTH     |    |   EMPLOYEE   |                |  WORKFORCE   |    |   PAYROLL    |
+|   SERVICE    |    |   SERVICE   |                |   SERVICE    |    |   SERVICE    |
+| Login / JWT  |    | Lifecycle / AI|                | Attendance   |    | Pay Runs     |
+|    RBAC      |    |  Onboarding  |                | Leave / Perf.|    | Payslips     |
 +--------------+    +--------------+                +--------------+    +--------------+
                                            │
                                            ▼
 +---------------------------------------------------------------------------------------+
 |                                    PERSISTENCE LAYER                                  |
 |    Spring Data JPA (Hibernate 6.5) • Zero Dynamic SQL (OWASP A03 Mitigation)          |
-|    Dev Mode: Embedded H2 (PostgreSQL Compatible, Zero Setup Friction)                 |
-|    Prod Mode: PostgreSQL 17 (ACID, Partitioned) + Redis 7 (Session & Cache)           |
+|    Each microservice owns its separate PostgreSQL 17 database                        |
+|    Services communicate over HTTP; authorization uses shared signed JWT claims       |
 +---------------------------------------------------------------------------------------+
 ```
 
 ---
+
+Each service is an independently buildable Spring Boot application with its own PostgreSQL database. The Vite development proxy and production Nginx gateway route frontend API requests to the service that owns each endpoint. The legacy `backend/` monolith remains in the repository but is not started by the microservice Compose stack.
 
 ## 🚀 Key Functional Capabilities (PDF F-01 to F-07)
 
@@ -86,7 +88,25 @@ The frontend includes an **instant 1-Click Role Switcher** in the top navigation
 - **Node.js 20+** and **npm**
 - Set `APP_JWT_SECRET` to a fresh Base64-encoded 256-bit key before starting the backend.
 
-### Step 1: Start Backend (Spring Boot 3.3)
+### Recommended: Start the microservices stack
+PowerShell:
+```powershell
+$env:APP_JWT_SECRET = [Convert]::ToBase64String([Security.Cryptography.RandomNumberGenerator]::GetBytes(32))
+docker compose up --build
+```
+
+macOS/Linux:
+```bash
+export APP_JWT_SECRET="$(openssl rand -base64 32)"
+docker compose up --build
+```
+
+- Frontend: `http://localhost:3000`
+- Auth / Employee / Workforce / Payroll APIs: `http://localhost:8081` through `http://localhost:8084`
+- Compose runs four separately deployable Spring Boot services and four service-owned PostgreSQL databases. Set a strong `DB_PASSWORD` for non-local deployments; the Compose fallback is for local development only.
+- The original single-process backend in `backend/` remains available as a legacy option and is not used by Compose.
+
+### Legacy option: Start the monolith (Spring Boot 3.3)
 PowerShell:
 ```powershell
 $env:APP_JWT_SECRET = [Convert]::ToBase64String([Security.Cryptography.RandomNumberGenerator]::GetBytes(32))
@@ -105,7 +125,7 @@ mvn clean spring-boot:run
 - Interactive Swagger UI: `http://localhost:8080/api/swagger-ui.html`
 - Embedded H2 Console: `http://localhost:8080/api/h2-console` (JDBC URL: `jdbc:h2:mem:nexushr_db`, User: `sa`, Password: `password`)
 
-### Step 2: Start Frontend (React 19 + TypeScript + Vite)
+### Run the frontend separately (optional)
 ```bash
 cd frontend
 npm install
@@ -119,7 +139,7 @@ npm run dev
 
 ## 🐳 Docker & Docker Compose Deployment
 
-Run the complete production stack (Backend + Frontend + PostgreSQL 17 + Redis 7):
+Run the complete local stack (four services, four PostgreSQL databases, and frontend):
 
 ```bash
 cp .env.example .env
@@ -127,7 +147,7 @@ cp .env.example .env
 docker compose up --build
 ```
 - Frontend UI: `http://localhost:3000`
-- Backend API: `http://localhost:8080/api`
+- Auth / Employee / Workforce / Payroll APIs: ports `8081` / `8082` / `8083` / `8084`
 
 ---
 
@@ -143,12 +163,14 @@ Auto-scaler policy (`backend-hpa.yaml`) automatically scales backend pods from *
 
 ## 🧪 Automated Testing
 
-### Backend Unit & Integration Tests:
+### Microservice tests:
 ```bash
-cd backend
-mvn test
+for service in auth-service employee-service workforce-service payroll-service; do
+  (cd "services/$service" && mvn test) || exit 1
+done
 ```
-*(Executes `NexusHrApplicationTests` and `AiIntelligenceServiceTest` validating AI prediction accuracy and JPA persistence).*
+
+Legacy monolith tests can still be run with `cd backend && mvn test`.
 
 ### Frontend Production Build:
 ```bash

@@ -11,12 +11,48 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
-      '/api': {
-        target: 'http://localhost:8080',
+      '/api/auth': {
+        target: 'http://localhost:8081',
         changeOrigin: true,
       },
-      '/ws': {
-        target: 'http://localhost:8080',
+      '/api/employees': {
+        target: 'http://localhost:8082',
+        changeOrigin: true,
+      },
+      '/api/departments': {
+        target: 'http://localhost:8082',
+        changeOrigin: true,
+      },
+      '/api/ai': {
+        target: 'http://localhost:8082',
+        changeOrigin: true,
+      },
+      '/api/payroll': {
+        target: 'http://localhost:8084',
+        changeOrigin: true,
+      },
+      '/api/attendance': {
+        target: 'http://localhost:8083',
+        changeOrigin: true,
+      },
+      '/api/leaves': {
+        target: 'http://localhost:8083',
+        changeOrigin: true,
+      },
+      '/api/performance': {
+        target: 'http://localhost:8083',
+        changeOrigin: true,
+      },
+      '/api/notifications': {
+        target: 'http://localhost:8083',
+        changeOrigin: true,
+      },
+      '/api/dashboard': {
+        target: 'http://localhost:8083',
+        changeOrigin: true,
+      },
+      '/api/ws': {
+        target: 'http://localhost:8083',
         ws: true,
       }
     }

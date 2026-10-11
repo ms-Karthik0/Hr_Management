@@ -22,6 +22,8 @@ public class SignupRequest {
 
     private Role role = Role.ROLE_EMPLOYEE;
 
+    private Long employeeId;
+
     public SignupRequest() {}
 
     public String getEmail() { return email; }
@@ -38,4 +40,7 @@ public class SignupRequest {
 
     public Role getRole() { return role; }
     public void setRole(Role role) { this.role = role; }
+
+    public Long getEmployeeId() { return employeeId; }
+    public void setEmployeeId(Long employeeId) { this.employeeId = employeeId; }
 }
