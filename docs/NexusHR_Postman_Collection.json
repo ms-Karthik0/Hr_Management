@@ -1,0 +1,138 @@
+{
+  "info": {
+    "name": "NexusHR Enterprise REST API",
+    "_postman_id": "c7a8b9f0-1234-5678-90ab-cdef12345678",
+    "description": "Production API Collection for NexusHR - AI-Enabled Enterprise HR & Workforce Intelligence Platform",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Login (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@zidio.com\",\n  \"password\": \"admin123\"\n}"
+            },
+            "url": { "raw": "http://localhost:8080/api/auth/login", "protocol": "http", "host": ["localhost"], "port": "8080", "path": ["api", "auth", "login"] }
+          }
+        },
+        {
+          "name": "Register Employee",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"new.engineer@zidio.com\",\n  \"password\": \"password123\",\n  \"firstName\": \"New\",\n  \"lastName\": \"Engineer\",\n  \"role\": \"ROLE_EMPLOYEE\"\n}"
+            },
+            "url": { "raw": "http://localhost:8080/api/auth/register", "protocol": "http", "host": ["localhost"], "port": "8080", "path": ["api", "auth", "register"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Employees",
+      "item": [
+        {
+          "name": "Get All Employees",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }],
+            "url": { "raw": "http://localhost:8080/api/employees", "protocol": "http", "host": ["localhost"], "port": "8080", "path": ["api", "employees"] }
+          }
+        },
+        {
+          "name": "Create Employee",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Jordan\",\n  \"lastName\": \"Lee\",\n  \"email\": \"jordan.lee@zidio.com\",\n  \"phone\": \"+1 (555) 777-8888\",\n  \"departmentId\": 1,\n  \"designation\": \"Staff Cloud Architect\",\n  \"baseSalary\": 12500,\n  \"skills\": \"Java 21, Spring AI, AWS, Kubernetes, Terraform\"\n}"
+            },
+            "url": { "raw": "http://localhost:8080/api/employees", "protocol": "http", "host": ["localhost"], "port": "8080", "path": ["api", "employees"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Biometric Attendance",
+      "item": [
+        {
+          "name": "Today Attendance",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }],
+            "url": { "raw": "http://localhost:8080/api/attendance/today", "protocol": "http", "host": ["localhost"], "port": "8080", "path": ["api", "attendance", "today"] }
+          }
+        },
+        {
+          "name": "Simulate Biometrics",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }],
+            "url": { "raw": "http://localhost:8080/api/attendance/simulate-biometrics", "protocol": "http", "host": ["localhost"], "port": "8080", "path": ["api", "attendance", "simulate-biometrics"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Payroll",
+      "item": [
+        {
+          "name": "Get Payroll for March 2026",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }],
+            "url": { "raw": "http://localhost:8080/api/payroll/period?payPeriod=March 2026", "protocol": "http", "host": ["localhost"], "port": "8080", "path": ["api", "payroll", "period"], "query": [{ "key": "payPeriod", "value": "March 2026" }] }
+          }
+        },
+        {
+          "name": "Run Batch Payroll",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }],
+            "url": { "raw": "http://localhost:8080/api/payroll/batch-run?payPeriod=March 2026", "protocol": "http", "host": ["localhost"], "port": "8080", "path": ["api", "payroll", "batch-run"], "query": [{ "key": "payPeriod", "value": "March 2026" }] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "AI Workforce Intelligence",
+      "item": [
+        {
+          "name": "Attrition Flight Risk Radar",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }],
+            "url": { "raw": "http://localhost:8080/api/ai/attrition-predictions", "protocol": "http", "host": ["localhost"], "port": "8080", "path": ["api", "ai", "attrition-predictions"] }
+          }
+        },
+        {
+          "name": "Skill Gap Analysis",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }],
+            "url": { "raw": "http://localhost:8080/api/ai/skill-gaps", "protocol": "http", "host": ["localhost"], "port": "8080", "path": ["api", "ai", "skill-gaps"] }
+          }
+        },
+        {
+          "name": "Strategic Insights",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }],
+            "url": { "raw": "http://localhost:8080/api/ai/insights", "protocol": "http", "host": ["localhost"], "port": "8080", "path": ["api", "ai", "insights"] }
+          }
+        }
+      ]
+    }
+  ]
+}
